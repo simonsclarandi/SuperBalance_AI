@@ -29,7 +29,7 @@ function App() {
 
   // Cargar transacciones desde el backend
   useEffect(() => {
-    axios.get('http://localhost:3000/api/transacciones')
+    axios.get('https://superbalance-ai.onrender.com/api/transacciones')
       .then(response => {
         setTransacciones(response.data);
       })
