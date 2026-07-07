@@ -1,42 +1,26 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-// Obtener la ruta absoluta del proyecto (raíz)
-const projectRoot = process.cwd();
-const dbPath = path.join(projectRoot, 'superbalance.sqlite');
+// Conectamos al pool de Postgres usando la URL de Neon
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false } // Requisito de seguridad para Neon
+});
 
-let db;
+// Inicializamos la tabla si no existe (Sintaxis de Postgres)
+pool.query(`
+    CREATE TABLE IF NOT EXISTS transacciones (
+        id SERIAL PRIMARY KEY,
+        tipo VARCHAR(50) NOT NULL,
+        monto DECIMAL(12,2) NOT NULL,
+        categoria VARCHAR(100) NOT NULL,
+        descripcion TEXT,
+        canal_origen VARCHAR(50) NOT NULL,
+        fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+`).then(() => {
+    console.log('✅ Base de datos PostgreSQL (Neon) conectada y lista.');
+}).catch(err => {
+    console.error('❌ Error configurando Postgres:', err.message);
+});
 
-function initDatabase() {
-    // Crear conexión a SQLite
-    db = new sqlite3.Database(dbPath);
-
-    // Crear tabla transacciones si no existe
-    const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS transacciones (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo TEXT NOT NULL,
-            monto REAL NOT NULL,
-            categoria TEXT NOT NULL,
-            descripcion TEXT,
-            canal_origen TEXT NOT NULL,
-            fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    `;
-
-    db.run(createTableQuery, function(err) {
-        if (err) {
-            console.error('Error al crear la tabla:', err.message);
-        } else {
-            console.log('Tabla transacciones creada o ya existe');
-        }
-    });
-
-    return db;
-}
-
-// Exportar conexión y función de inicialización
-module.exports = {
-    initDatabase,
-    getDb: () => db
-};
+module.exports = pool;

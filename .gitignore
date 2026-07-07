@@ -1,0 +1,7 @@
+.aider*
+.env
+node_modules/
+frontend/node_modules/
+.env
+superbalance.sqlite
+.DS_Store
